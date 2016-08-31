@@ -1,0 +1,26 @@
+{
+  "name": "keeex-version-explorer",
+  "title": "KeeeX Version Explorer",
+  "version": "1.0.0",
+  "description": "Manage the versions of a document is never easier with Keeex Version Explorer",
+  "plugin-icon": "icon.png",
+  "main": "main.html",
+  "author": "DANG Xuan Thong",
+  "license": "ISC",
+  "dependencies": {
+    "async": "^1.5.2",
+    "fs-extra": "^0.22.1",
+    "jszip": "^2.5.0",
+    "keeex-api": "^0.2.1",
+    "path": "^0.11.14",
+    "process": "^0.11.1"
+  },
+  "window": {
+    "toolbar": false,
+    "frame": true,
+    "width": 1024,
+    "height": 720,
+    "position": "center",
+    "resizable": true
+  }
+}

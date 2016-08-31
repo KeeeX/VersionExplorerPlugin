@@ -1,0 +1,174 @@
+<!--
+Copyright (c) 2016 KeeeX SAS 
+
+This is an open source project available under the MIT license.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+-->
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title></title>
+	<link rel="stylesheet" href="./css/app.css" />
+</head>
+<script src="./js/d3.js"></script>
+<script src="./js/versionMapVisualiser.js"></script>
+<script>
+	var maximized=false;
+		var gui = require('nw.gui');
+		
+		function _close(){
+			gui.Window.get().close();
+		}
+		function _minimize(){
+			gui.Window.get().minimize();
+		}
+		function _maximize(){
+			if (maximized)
+				gui.Window.get().unmaximize();
+			else
+				gui.Window.get().maximize();
+			maximized = !maximized;
+		}
+		
+		function _initDragDrop(){		
+			//gui.Window.get().showDevTools();
+			gui.Window.get().on('resize', function(){
+				refreshUI();
+			});
+			
+			initMap();
+			window.ondragover = function(e) { e.preventDefault(); return false };
+			window.ondrop = function(e) { e.preventDefault(); return false };
+
+			var holder = document.getElementById('divSvg');
+			holder.ondragover = function () { this.className = 'hover'; return false; };
+			holder.ondragleave = function () { this.className = 'normal'; return false; };
+			holder.ondrop = function (e) {	
+				e.preventDefault();				
+				if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]){					
+					var params = {
+						path : 	e.dataTransfer.files[0].path
+					};
+					var utils = require('./js/utils.js').utils;
+					utils.handlePostRequest(params, '/keeex.topics.verify', 'localhost', 8288, function(error, topic){
+
+						if (error){
+							alert('Error: ' + error);
+							console.log(error);
+						}
+						else{
+							console.log(topic);
+							if (topic){
+								var idx=topic.MainIdx;
+								console.log(idx);
+								populateMap(idx, true);
+								this.className = 'drop';
+							}
+							else{
+								showAlert('Not a valid keeexed file!');
+							}
+
+						}
+						var holder = document.getElementById('divSvg');
+						holder.className = "normal";
+					});
+				}
+			};
+		}
+		
+		function _navigateBack(){
+			navigateBack();
+		}
+		function _navigateForward(){
+			navigateForward();
+		}
+		
+		function _exitApp(){
+			exit();
+		}
+		
+		function _minimizeWindow(){
+			var gui = require('nw.gui');
+			var win = gui.Window.get();
+			win.minimize();
+		}
+		
+		function _searchEnter(evt){
+			if (evt.keyCode==13){
+				_search();
+			}
+		}
+		
+		function _search(){
+			var filter = document.getElementById("txtSearch").value;
+			if (filter.length>0){
+				displaySearchResult(filter);
+			}
+		}
+		
+		function _hideResultList(){
+			hideSearchResultList();
+		}
+
+</script>
+
+<body onload="_initDragDrop()">
+	<div id="divTitleBar">KeeeX</div>
+	<div id="divTitleBarSub">Version explorer</div>
+	<div id="divTitleBarButton">
+		<img class="button" id="btMinimize" onclick="_minimize()" src="./images/minimize.png" />
+		<img class="button" id="btMaximize" onclick="_maximize()" src="./images/maximize.png" />
+		<img class="button" id="btClose" onclick="_close()" src="./images/close.png" onmouseover="this.src='./images/close_hover.png'"
+		onmouseout="this.src='./images/close.png'" />
+	</div>
+	<input style="display:none;" id="fileDialog" nwsaveas type="file" />
+	<div id="divCover">
+		<div id="divNavigation" class="container">
+			<input id="btNavigationBack" type="button" class="navigation back" onclick="_navigateBack()" disabled="true" />
+			<input id="btNavigationForward" type="button" class="navigation forward" onclick="_navigateForward()" disabled="true" />
+			<div id="divIdx" class="idx"></div>
+		</div>
+		<div id="divSearch" class="container">
+			<input id="txtSearch" placeholder="Type something to search" onkeypress="_searchEnter(event)" />
+			<img id="imgSearch" src="images/search.svg" onclick="_search()" />
+		</div>
+		<div id="divRightPane">
+			<div id="divSearchResult" class="search_list">
+				<div>
+					<div class="detail_header">
+						<div class="detail_header_text">Search result</div>
+						<input type="button" class="panel" onclick="_hideResultList()" />
+					</div>
+					<div class="detail_body">
+						<div id="divSearchContent"></div>
+					</div>
+				</div>
+			</div>
+			<div id="div_detail"></div>
+		</div>
+		<div id="divDraw" class="container">
+			<div id="divSvg" class="normal">
+			</div>
+		</div>
+	</div>
+	<div id="divHider"></div>
+	<div id="divDialog">
+		<div id="divDialogTitleBar"></div>
+		<div id="divDialogContent"></div>
+		<div id="divDialogButton">
+			<input type="button" id="btDialogOK" class="dialogButton" value="OK" />
+			<input type="button" id="btDialogCancel" class="dialogButton" value="Cancel" />
+		</div>
+	</div>
+</body>
+
+</html>
